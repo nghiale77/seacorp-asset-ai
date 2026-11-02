@@ -1,0 +1,30 @@
+# Dùng khi deploy qua Dokploy (xem README-DOKPLOY.md).
+# Khác với docker-compose.yml gốc: KHÔNG tự chạy Postgres ở đây — dùng
+# Database Postgres riêng do Dokploy cấp (Project -> Create Database),
+# DATABASE_URL trỏ tới đó qua biến môi trường khai báo trong Dokploy UI.
+# Traefik/HTTPS cũng do Dokploy tự cấu hình qua tab "Domains" của từng
+# Application — không cần label Traefik thủ công trong file này.
+services:
+  frontend:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DB_SCHEMA: seacorp_asset
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SECRET_KEY: ${SECRET_KEY}
+    expose:
+      - "8501"
+    command: ["streamlit", "run", "frontend/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DB_SCHEMA: seacorp_asset
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SECRET_KEY: ${SECRET_KEY}
+    expose:
+      - "8000"
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
